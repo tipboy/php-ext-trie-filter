@@ -47,9 +47,10 @@ function trie_filter_new() {
  * 
  * @param resource $resTree
  * @param string $strWord
+ * @param int $data
  * @return bool true on success or false on error.
  */
-function trie_filter_store($resTree, $strWord) {
+function trie_filter_store($resTree, $strWord,$data) {
 
 }
 
