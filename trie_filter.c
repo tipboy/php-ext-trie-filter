@@ -150,13 +150,16 @@ static int trie_search(Trie *trie, const AlphaChar *text, int *offset, TrieData 
 
 	while (*text) {		
 		p = text;
-		if (! trie_state_is_walkable(s, *p)) {
-            trie_state_rewind(s);
+		if (! trie_state_is_walkable(s, *p)) 
+		{
+            		trie_state_rewind(s);
 			text++;
 			continue;
-		} else {
+		} 
+		else 
+		{
 			trie_state_walk(s, *p++);
-        }
+	        }
 
 		while (trie_state_is_walkable(s, *p) && ! trie_state_is_terminal(s))
 			trie_state_walk(s, *p++);
@@ -164,16 +167,13 @@ static int trie_search(Trie *trie, const AlphaChar *text, int *offset, TrieData 
 		if (trie_state_is_terminal(s)) {
 			*offset = text - base;
 			*length = p - text;
-            trie_state_free(s);
-            
+            		trie_state_free(s);            
 			return 1;
 		}
-
-        trie_state_rewind(s);
+        	trie_state_rewind(s);
 		text++;
 	}
-    trie_state_free(s);
-
+   	trie_state_free(s);
 	return 0;
 }
 
@@ -187,7 +187,7 @@ PHP_FUNCTION(trie_filter_search)
 	int text_len;
 
 	int offset = -1, i, ret;
-    TrieData length = 0;
+    	TrieData length = 0;
 
 	AlphaChar *alpha_text;
 
@@ -196,8 +196,9 @@ PHP_FUNCTION(trie_filter_search)
 		RETURN_FALSE;
 	}
 
-    array_init(return_value);
-    if (text_len < 1 || strlen(text) != text_len) {
+   	array_init(return_value);
+   	
+    	if (text_len < 1 || strlen(text) != text_len) {
 		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "input is empty");
 		return;
 	}
