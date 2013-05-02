@@ -136,7 +136,7 @@ PHP_FUNCTION(trie_filter_load)
 	ZEND_REGISTER_RESOURCE(return_value, trie, le_trie_filter);
 }
 /* }}} */
-
+//暂时没有用
 static int trie_search(Trie *trie, const AlphaChar *text, int *offset, TrieData *length)
 {
 	TrieState *s;
@@ -186,8 +186,10 @@ PHP_FUNCTION(trie_filter_search)
 	unsigned char *text;
 	int text_len;
 
-	int offset = -1, i, ret;
-    	TrieData length = 0;
+	int  i, ret;
+	//int offset = -1, i, ret;
+    	//TrieData length = 0;
+    TrieData data=0;
 
 	AlphaChar *alpha_text;
 
@@ -196,9 +198,9 @@ PHP_FUNCTION(trie_filter_search)
 		RETURN_FALSE;
 	}
 
-   	array_init(return_value);
+   	//array_init(return_value);
    	
-    	if (text_len < 1 || strlen(text) != text_len) {
+    if (text_len < 1 || strlen(text) != text_len) {
 		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "input is empty");
 		return;
 	}
@@ -213,14 +215,20 @@ PHP_FUNCTION(trie_filter_search)
 	}
 
 	alpha_text[text_len] = TRIE_CHAR_TERM;
-
-	ret = trie_search(trie, alpha_text, &offset, &length);
+	
+	ret=trie_retrieve(trie, alpha_text,data);
+	//ret = trie_search(trie, alpha_text, &offset, &length);
 	if (ret == 0) {
-        return;
-    } else if (ret == 1) {
-		add_next_index_long(return_value, offset);
-		add_next_index_long(return_value, length);
-	} else {
+        return 0;
+    } 
+    else if (ret == 1) 
+    {
+		//add_next_index_long(return_value, offset);
+		//add_next_index_long(return_value, length);
+		return data;
+    }
+    else 
+    {
         RETURN_FALSE;
     }
 }
