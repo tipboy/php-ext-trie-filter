@@ -272,17 +272,13 @@ PHP_FUNCTION(trie_filter_store)
 	unsigned char *keyword, *p;
 	int keyword_len, i;
     AlphaChar alpha_key[KEYWORD_MAX_LEN+1];
-    int data,data_len;
+    int data;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", 
-				&trie_resource, &keyword, &keyword_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsl", 
+				&trie_resource, &keyword, &keyword_len,&data) == FAILURE) {
 		RETURN_FALSE;
 	}
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", 
-				&trie_resource, &data, &data_len) == FAILURE) {
-		data=0;
-		data_len=0;
-	}	
+
 	
     if (keyword_len > KEYWORD_MAX_LEN || keyword_len < 1) {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "keyword should has [1, %d] bytes", KEYWORD_MAX_LEN);
