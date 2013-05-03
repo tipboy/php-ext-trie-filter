@@ -137,7 +137,7 @@ PHP_FUNCTION(trie_filter_load)
 }
 /* }}} */
 //暂时没有用
-static int trie_search(Trie *trie, const AlphaChar *text, int *offset, TrieData *length)
+static int trie_search(Trie *trie, const AlphaChar *text,  TrieData *data)
 {
 	TrieState *s;
 	const AlphaChar *p;
@@ -159,15 +159,16 @@ static int trie_search(Trie *trie, const AlphaChar *text, int *offset, TrieData 
 		else 
 		{
 			trie_state_walk(s, *p++);
-	        }
+	  }
 
 		while (trie_state_is_walkable(s, *p) && ! trie_state_is_terminal(s))
 			trie_state_walk(s, *p++);
 
 		if (trie_state_is_terminal(s)) {
-			*offset = text - base;
-			*length = p - text;
-            		trie_state_free(s);            
+			//*offset = text - base;
+			//*length = p - text;
+      *data=trie_state_get_data(s);
+      trie_state_free(s);            
 			return 1;
 		}
         	trie_state_rewind(s);
@@ -188,8 +189,8 @@ PHP_FUNCTION(trie_filter_search)
 
 	int  i, ret;
 	//int offset = -1, i, ret;
-    	//TrieData length = 0;
-    TrieData data=0;
+  //TrieData length = 0;
+  TrieData data;
 
 	AlphaChar *alpha_text;
 
@@ -200,7 +201,7 @@ PHP_FUNCTION(trie_filter_search)
 
    	//array_init(return_value);
    	
-    if (text_len < 1 || strlen(text) != text_len) {
+  if (text_len < 1 || strlen(text) != text_len) {
 		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "input is empty");
 		return;
 	}
@@ -216,21 +217,19 @@ PHP_FUNCTION(trie_filter_search)
 
 	alpha_text[text_len] = TRIE_CHAR_TERM;
 	
-	ret=trie_retrieve(trie, alpha_text,data);
-	//ret = trie_search(trie, alpha_text, &offset, &length);
-	if (ret == 0) {
-        return 0;
-    } 
-    else if (ret == 1) 
-    {
-		//add_next_index_long(return_value, offset);
-		//add_next_index_long(return_value, length);
-		return data;
-    }
-    else 
-    {
-        RETURN_FALSE;
-    }
+	//ret=trie_retrieve(trie, alpha_text,&data);
+ 
+  //php_error_docref(NULL TSRMLS_CC, E_WARNING, "data:%d,ret:%s,text:%s",data,ret==1?"true":"false",text);
+	ret = trie_search(trie, alpha_text,  &data);
+  //return data;
+
+	if (ret==1) {
+      RETURN_LONG(data);    
+  }
+  else 
+  {
+     RETURN_FALSE;
+  }
 }
 /* }}} */
 
@@ -263,40 +262,41 @@ PHP_FUNCTION(trie_filter_new)
 /* }}} */
 
 #define KEYWORD_MAX_LEN 1024
-/* {{{ proto bool trie_filter_store(int trie_tree_identifier, string keyword)
+/* {{{ proto bool trie_filter_store(int trie_tree_identifier, string keyword,int data)
    Returns true, or false on error*/
 PHP_FUNCTION(trie_filter_store)
 {
-    Trie *trie;
+  Trie *trie;
 	zval *trie_resource;
 	unsigned char *keyword, *p;
 	int keyword_len, i;
-    AlphaChar alpha_key[KEYWORD_MAX_LEN+1];
-    int data;
+  AlphaChar alpha_key[KEYWORD_MAX_LEN+1];
+  int data;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsl", 
-				&trie_resource, &keyword, &keyword_len,&data) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rls", 
+				&trie_resource,&data, &keyword, &keyword_len) == FAILURE) {
 		RETURN_FALSE;
 	}
-
 	
-    if (keyword_len > KEYWORD_MAX_LEN || keyword_len < 1) {
-        php_error_docref(NULL TSRMLS_CC, E_WARNING, "keyword should has [1, %d] bytes", KEYWORD_MAX_LEN);
+  if (keyword_len > KEYWORD_MAX_LEN || keyword_len < 1) {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "keyword should has [1, %d] bytes,now:%d", KEYWORD_MAX_LEN,keyword_len);
         RETURN_FALSE;
-    }
+  }
      
-    	ZEND_FETCH_RESOURCE(trie, Trie *, &trie_resource, -1, PHP_TRIE_FILTER_RES_NAME, le_trie_filter);
-    p = keyword;
-    i = 0;
-    while (*p && *p != '\n' && *p != '\r') {
-        alpha_key[i++] = (AlphaChar)*p;
-        p++;
-    }
-    alpha_key[i] = TRIE_CHAR_TERM;
-    if (! trie_store(trie, alpha_key, data)) {
-        RETURN_FALSE;
-    }
-    RETURN_TRUE;
+  ZEND_FETCH_RESOURCE(trie, Trie *, &trie_resource, -1, PHP_TRIE_FILTER_RES_NAME, le_trie_filter);
+  p = keyword;
+  i = 0;
+  while (*p && *p != '\n' && *p != '\r') {
+      alpha_key[i++] = (AlphaChar)*p;
+      p++;
+  }
+  alpha_key[i] = TRIE_CHAR_TERM;
+
+  //php_error_docref(NULL TSRMLS_CC, E_WARNING, "store:data:%d,key:%s",data,keyword);
+  if (! trie_store(trie, alpha_key, data)) {
+      RETURN_FALSE;
+  }
+  RETURN_TRUE;
 }
 /* }}} */
 
