@@ -50,7 +50,7 @@ function trie_filter_new() {
  * @param int $data
  * @return bool true on success or false on error.
  */
-function trie_filter_store($resTree, $strWord,$data) {
+function trie_filter_store($resTree, $data,$strWord) {
 
 }
 
