@@ -136,45 +136,53 @@ PHP_FUNCTION(trie_filter_load)
 	ZEND_REGISTER_RESOURCE(return_value, trie, le_trie_filter);
 }
 /* }}} */
-//暂时没有用
-static int trie_search(Trie *trie, const AlphaChar *text,  TrieData *data)
+
+
+
+
+static int trie_search(Trie *trie, const AlphaChar *text,  zval *ret)
 {
 	TrieState *s;
 	const AlphaChar *p;
 	const AlphaChar *base;
-
+  //unsigned char *word;
+  zval *word = NULL;
 	base = text;
-    if (! (s = trie_root(trie))) {
+  if (! (s = trie_root(trie))) {
         return -1;
+  }
+
+while (*text) {   
+    p = text;
+
+    if(!trie_state_is_walkable(s, *p))
+    {
+      trie_state_rewind(s);
+      text++;
+      continue;
     }
 
-	while (*text) {		
-		p = text;
-		if (! trie_state_is_walkable(s, *p)) 
-		{
-            		trie_state_rewind(s);
-			text++;
-			continue;
-		} 
-		else 
-		{
-			trie_state_walk(s, *p++);
-	  }
+    while(trie_state_is_walkable(s, *p) && !trie_state_is_leaf(s))
+    {
+      trie_state_walk(s, *p++);  
+      if (trie_state_is_terminal(s)) 
+      { 
+        MAKE_STD_ZVAL(word);
+        array_init_size(word, 3);
+        add_next_index_long(word, text - base);
+        add_next_index_long(word, p - text);
+        add_next_index_long(word, trie_state_get_data(s));
+        add_next_index_zval(ret, word);        
+      }
+         
+    }
 
-		while (trie_state_is_walkable(s, *p) && ! trie_state_is_terminal(s))
-			trie_state_walk(s, *p++);
-
-		if (trie_state_is_terminal(s)) {
-			//*offset = text - base;
-			//*length = p - text;
-      *data=trie_state_get_data(s);
-      trie_state_free(s);            
-			return 1;
-		}
-        	trie_state_rewind(s);
-		text++;
-	}
-   	trie_state_free(s);
+    trie_state_rewind(s);
+    text++;
+  }
+    trie_state_free(s);
+   if(ret)
+     return 1;
 	return 0;
 }
 
@@ -199,7 +207,7 @@ PHP_FUNCTION(trie_filter_search)
 		RETURN_FALSE;
 	}
 
-   	//array_init(return_value);
+  array_init(return_value);
    	
   if (text_len < 1 || strlen(text) != text_len) {
 		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "input is empty");
@@ -220,11 +228,12 @@ PHP_FUNCTION(trie_filter_search)
 	//ret=trie_retrieve(trie, alpha_text,&data);
  
   //php_error_docref(NULL TSRMLS_CC, E_WARNING, "data:%d,ret:%s,text:%s",data,ret==1?"true":"false",text);
-	ret = trie_search(trie, alpha_text,  &data);
+	ret = trie_search(trie, alpha_text,  return_value);
   //return data;
 
 	if (ret==1) {
-      RETURN_LONG(data);    
+      //add_next_index_long(return_value, offset);
+      //RETURN_LONG(data);    
   }
   else 
   {
